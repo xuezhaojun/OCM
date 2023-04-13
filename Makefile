@@ -34,3 +34,15 @@ image-registration-operator:
 	docker build \
 		-f build/Dockerfile.registration-operator \
 		-t $(IMAGE_REGISTRY)/registration-operator:$(IMAGE_TAG) .
+
+build:
+	make build-registration
+	make build-work
+	make build-placement
+	make build-registration-operator
+
+images:
+	make image-registration
+	make image-work
+	make image-placement
+	make image-registration-operator

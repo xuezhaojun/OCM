@@ -1,0 +1,116 @@
+name: Pre-registration
+
+on:
+  workflow_dispatch: {}
+  pull_request:
+    branches:
+      - main
+      - release-*
+    paths:
+      - "staging/src/open-cluster-management.io/registration/**"
+
+env:
+  GO_VERSION: '1.19'
+  GO_REQUIRED_MIN_VERSION: ''
+
+jobs:
+  verify:
+    name: verify
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout code
+        uses: actions/checkout@v3
+      - name: install Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: ${{ env.GO_VERSION }}
+      - name: verify
+        run: make -C ./staging/src/open-cluster-management.io/registration verify
+
+  verify-deps:
+    name: verify-deps
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout code
+        uses: actions/checkout@v3
+      - name: install Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: ${{ env.GO_VERSION }}
+      - name: verify-deps
+        run: make -C ./staging/src/open-cluster-management.io/registration verify-deps
+
+  build:
+    name: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 1
+      - name: install Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: ${{ env.GO_VERSION }}
+      - name: build
+        run: make -C ./staging/src/open-cluster-management.io/registration build
+
+  unit:
+    name: unit
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout code
+        uses: actions/checkout@v3
+      - name: install Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: ${{ env.GO_VERSION }}
+      - name: unit
+        run: make -C ./staging/src/open-cluster-management.io/registration test
+
+  integration:
+    name: integration
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout code
+        uses: actions/checkout@v3
+      - name: install Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: ${{ env.GO_VERSION }}
+      - name: integration
+        run: make -C ./staging/src/open-cluster-management.io/registration test-integration
+
+  e2e:
+    name: e2e-registration
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Setup Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: ${{ env.GO_VERSION }}
+      - name: Setup kind
+        uses: engineerd/setup-kind@v0.5.0
+        with:
+          version: v0.17.0
+      - name: Install imagebuilder
+        run: go install github.com/openshift/imagebuilder/cmd/imagebuilder@v1.2.3
+      - name: Build images # Build all images instead of only registration images to avoid the dependency issue.
+        run: |
+          make -C ./staging/src/open-cluster-management.io/placement images
+          make -C ./staging/src/open-cluster-management.io/work images
+          make -C ./staging/src/open-cluster-management.io/registration images
+          make -C ./staging/src/open-cluster-management.io/registration-operator images
+      - name: Load images
+        run: |
+          kind load docker-image --name=kind quay.io/open-cluster-management/registration-operator:latest
+          kind load docker-image --name=kind quay.io/open-cluster-management/registration:latest
+          kind load docker-image --name=kind quay.io/open-cluster-management/work:latest
+          kind load docker-image --name=kind quay.io/open-cluster-management/placement:latest
+      - name: Run e2e test registration
+        run: |
+          make -C ./staging/src/open-cluster-management.io/registration test-e2e
+        env:
+          KUBECONFIG: /home/runner/.kube/config
