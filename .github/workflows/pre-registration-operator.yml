@@ -7,7 +7,7 @@ on:
       - main
       - release-*
     paths:
-      - "staging/src/open-cluster-management.io/registration/**"
+      - "staging/src/open-cluster-management.io/registration-operator/**"
 
 env:
   GO_VERSION: '1.19'
