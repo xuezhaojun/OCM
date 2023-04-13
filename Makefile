@@ -3,6 +3,11 @@ SHELL :=/bin/bash
 IMAGE_REGISTRY?=quay.io/open-cluster-management
 IMAGE_TAG?=latest
 
+REGISTRATION_PATH=staging/src/open-cluster-management.io/registration
+WORK_PATH=staging/src/open-cluster-management.io/work
+PLACEMENT_PATH=staging/src/open-cluster-management.io/placement
+REGISTRATION_OPERATOR_PATH=staging/src/open-cluster-management.io/registration-operator
+
 build-registration:
 	go build -o registration ./cmd/registration
 
