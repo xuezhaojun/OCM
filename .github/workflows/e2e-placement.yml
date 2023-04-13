@@ -1,4 +1,4 @@
-name: E2E-registration
+name: E2E-placement
 
 on:
   workflow_dispatch: {}
