@@ -1,3 +1,5 @@
+Modify this to trigger pre-work.
+
 # ManifestWork
 
 Support a primitive that enables resources to be applied to a managed cluster.
@@ -49,7 +51,7 @@ make deploy
 
 #### Deploy on two clusters
 
-Set environment variables. 
+Set environment variables.
 
 - Hub and managed cluster share a kubeconfig file
     ```sh
