@@ -1,3 +1,5 @@
+Modify this to trigger pre-registration.
+
 # Cluster Registration
 
 Contains controllers that support:
