@@ -1,3 +1,5 @@
+Modify this to trigger the pre-placement.
+
 # Placement
 
 With `Placement`, you can select a set of `ManagedClusters` from the `ManagedClusterSets` bound to the placement namespace.
