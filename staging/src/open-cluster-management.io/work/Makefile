@@ -75,7 +75,7 @@ deploy-work-agent: ensure-kustomize create-cluster-ns hub-kubeconfig-secret
 	$(KUBECTL) config use-context $(SPOKE_KUBECONFIG_CONTEXT) --kubeconfig $(SPOKE_KUBECONFIG)
 	$(KUSTOMIZE) build deploy/spoke | $(KUBECTL) --kubeconfig $(SPOKE_KUBECONFIG) apply -f -
 	mv deploy/spoke/kustomization.yaml.tmp deploy/spoke/kustomization.yaml
-	$(KUBECTL) --kubeconfig $(SPOKE_KUBECONFIG) apply -f deploy/spoke/role_extension-apiserver.yaml 
+	$(KUBECTL) --kubeconfig $(SPOKE_KUBECONFIG) apply -f deploy/spoke/role_extension-apiserver.yaml
 	$(KUBECTL) --kubeconfig $(SPOKE_KUBECONFIG) apply -f deploy/spoke/role_binding_extension-apiserver.yaml
 
 deploy-hub: ensure-kustomize
@@ -108,6 +108,10 @@ build-e2e:
 	go test -c ./test/e2e -mod=vendor
 
 test-e2e: build-e2e deploy-hub e2e-hub-kubeconfig-secret
+	./e2e.test -test.v -ginkgo.v -deploy-agent=true -nil-executor-validating=true -webhook-deployment-name=work-webhook
+
+run-e2e-test:
+	go test -c ./test/e2e -mod=vendor
 	./e2e.test -test.v -ginkgo.v -deploy-agent=true -nil-executor-validating=true -webhook-deployment-name=work-webhook
 
 clean-e2e:

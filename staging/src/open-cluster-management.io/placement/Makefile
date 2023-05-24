@@ -62,6 +62,10 @@ build-e2e:
 test-e2e: build-e2e ensure-kustomize deploy-hub
 	./e2e.test -test.v -ginkgo.v
 
+run-e2e-test:
+	go test -c ./test/e2e -mod=vendor
+	./e2e.test -test.v -ginkgo.v
+
 clean-e2e:
 	$(RM) ./e2e.test
 

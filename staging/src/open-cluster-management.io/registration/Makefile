@@ -94,7 +94,7 @@ deploy-spoke: ensure-kustomize
 	$(KUBECTL) config use-context $(SPOKE_KUBECONFIG_CONTEXT) --kubeconfig $(SPOKE_KUBECONFIG)
 	$(KUSTOMIZE) build deploy/spoke | $(KUBECTL) --kubeconfig $(SPOKE_KUBECONFIG) apply -f -
 	mv deploy/spoke/kustomization.yaml.tmp deploy/spoke/kustomization.yaml
-	$(KUBECTL) --kubeconfig $(SPOKE_KUBECONFIG) apply -f deploy/spoke/role_extension-apiserver.yaml 
+	$(KUBECTL) --kubeconfig $(SPOKE_KUBECONFIG) apply -f deploy/spoke/role_extension-apiserver.yaml
 	$(KUBECTL) --kubeconfig $(SPOKE_KUBECONFIG) apply -f deploy/spoke/role_binding_extension-apiserver.yaml
 
 clean-hub:
@@ -119,6 +119,10 @@ build-e2e:
 	go test -c ./test/e2e -mod=vendor
 
 test-e2e: build-e2e ensure-kustomize deploy-hub deploy-webhook e2e-bootstrap-secret
+	./e2e.test -test.v -ginkgo.v
+
+run-e2e-test:
+	go test -c ./test/e2e -mod=vendor
 	./e2e.test -test.v -ginkgo.v
 
 clean-e2e:
