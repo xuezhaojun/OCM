@@ -81,6 +81,12 @@ spec:
           {{if gt .RegistrationKubeAPIBurst 0}}
           - "--kube-api-burst={{ .RegistrationKubeAPIBurst }}"
           {{end}}
+          {{range .BootStrapKubeConfigSecrets}}
+          - "--bootstrap-kubeconfig-secrets={{ . }}"
+          {{end}}
+          {{if gt .HubConnectionTimeoutSeconds 0}}
+          - "--hub-connection-timeout-seconds={{ .HubConnectionTimeoutSeconds }}"
+          {{end}}
         env:
           - name: POD_NAME
             valueFrom:

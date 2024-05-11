@@ -126,6 +126,8 @@ type klusterletConfig struct {
 	ExternalServerURL                           string
 	HubKubeConfigSecret                         string
 	BootStrapKubeConfigSecret                   string
+	BootStrapKubeConfigSecrets                  []string
+	HubConnectionTimeoutSeconds                 int32
 	OperatorNamespace                           string
 	Replica                                     int32
 	ClientCertExpirationSeconds                 int32
@@ -264,6 +266,13 @@ func (n *klusterletController) sync(ctx context.Context, controllerContext facto
 			annotationsArray = append(annotationsArray, fmt.Sprintf("%s=%s", k, v))
 		}
 		config.ClusterAnnotationsString = strings.Join(annotationsArray, ",")
+
+		// get bootstrap kubeconfig secrets from the klusterlet configuration
+		bootstrapKubeConfigs := klusterlet.Spec.RegistrationConfiguration.BootstrapKubeConfigs
+		if bootstrapKubeConfigs.Type == operatorapiv1.LocalSecrets {
+			config.BootStrapKubeConfigSecrets = bootstrapKubeConfigs.LocalSecrets.SecretNames
+			config.HubConnectionTimeoutSeconds = bootstrapKubeConfigs.LocalSecrets.HubConnectionTimeoutSeconds
+		}
 	}
 	config.RegistrationFeatureGates, registrationFeatureMsgs = helpers.ConvertToFeatureGateFlags("Registration",
 		registrationFeatureGates, ocmfeature.DefaultSpokeRegistrationFeatureGates)
