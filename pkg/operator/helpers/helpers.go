@@ -790,6 +790,20 @@ func ConvertToFeatureGateFlags(component string, features []operatorapiv1.Featur
 	return flags, ""
 }
 
+func IsRegistrationFeatureGateEnabled(rc *operatorapiv1.RegistrationConfiguration, featureName featuregate.Feature) bool {
+	var features []operatorapiv1.FeatureGate
+	if rc == nil {
+		return false
+	}
+	features = rc.FeatureGates
+	for _, feature := range features {
+		if feature.Feature == string(featureName) {
+			return feature.Mode == operatorapiv1.FeatureGateModeTypeEnable
+		}
+	}
+	return false
+}
+
 // FeatureGateEnabled checks if a feature is enabled or disabled in operator API, or fallback to use the
 // the default setting
 func FeatureGateEnabled(features []operatorapiv1.FeatureGate,
