@@ -6,6 +6,7 @@ include $(addprefix ./vendor/github.com/openshift/build-machinery-go/make/, \
 KUBECTL?=kubectl
 KUBECONFIG?=./.kubeconfig
 HUB_KUBECONFIG?=./.hub-kubeconfig
+HUB_KUBECONFIG_SECRET_NAME?=bootstrap-hub-kubeconfig
 KLUSTERLET_DEPLOY_MODE?=Default
 MANAGED_CLUSTER_NAME?=cluster1
 KLUSTERLET_NAME?=klusterlet
@@ -18,7 +19,7 @@ endif
 hub-kubeconfig:
 	$(KUBECTL) config view --minify --flatten > $(HUB_KUBECONFIG)
 
-deploy-hub: deploy-hub-operator apply-hub-cr hub-kubeconfig cluster-ip
+deploy-hub: deploy-hub-operator apply-hub-cr hub-kubeconfig
 
 deploy-hub-operator: ensure-kustomize
 	cp deploy/cluster-manager/config/kustomization.yaml deploy/cluster-manager/config/kustomization.yaml.tmp
@@ -29,11 +30,17 @@ deploy-hub-operator: ensure-kustomize
 apply-hub-cr:
 	$(SED_CMD) -e "s,quay.io/open-cluster-management/registration:latest,$(REGISTRATION_IMAGE)," -e "s,quay.io/open-cluster-management/work:latest,$(WORK_IMAGE)," -e "s,quay.io/open-cluster-management/placement:latest,$(PLACEMENT_IMAGE)," -e "s,quay.io/open-cluster-management/addon-manager:latest,$(ADDON_MANAGER_IMAGE)," deploy/cluster-manager/config/samples/operator_open-cluster-management_clustermanagers.cr.yaml | $(KUBECTL) apply -f -
 
-test-e2e: deploy-hub deploy-spoke-operator bootstrap-secret run-e2e
+test-e2e: deploy-hub cluster-ip deploy-spoke-operator bootstrap-secret run-e2e
 
 run-e2e:
 	go test -c ./test/e2e
 	./e2e.test -test.v -ginkgo.v -deploy-klusterlet=true -nil-executor-validating=true -registration-image=$(REGISTRATION_IMAGE) -work-image=$(WORK_IMAGE) -singleton-image=$(OPERATOR_IMAGE_NAME) -klusterlet-deploy-mode=$(KLUSTERLET_DEPLOY_MODE)
+
+# run-e2e-multiplehubs is used to test multiple hubs with multiple spokes
+# it uses the singleton mode to deploy the klusterlet
+run-e2e-multiplehubs:
+	go test -c ./test/e2emultiplehubs
+	./e2emultiplehubs.test -test.v -ginkgo.v -registration-image=$(REGISTRATION_IMAGE) -work-image=$(WORK_IMAGE) -singleton-image=$(OPERATOR_IMAGE_NAME) -hub1-kubeconfig=$(HUB1_KUBECONFIG) -hub2-kubeconfig=$(HUB2_KUBECONFIG) -spoke-kubeconfig=$(SPOKE_KUBECONFIG)
 
 clean-hub: clean-hub-cr clean-hub-operator
 
@@ -50,7 +57,7 @@ cluster-ip:
 bootstrap-secret:
 	cp $(HUB_KUBECONFIG) deploy/klusterlet/config/samples/bootstrap/hub-kubeconfig
 	$(KUBECTL) get ns open-cluster-management-agent; if [ $$? -ne 0 ] ; then $(KUBECTL) create ns open-cluster-management-agent; fi
-	$(KUSTOMIZE) build deploy/klusterlet/config/samples/bootstrap | $(KUBECTL) apply -f -
+	$(KUSTOMIZE) build deploy/klusterlet/config/samples/bootstrap | $(SED_CMD) -e "s/bootstrap-hub-kubeconfig/$(HUB_KUBECONFIG_SECRET_NAME)/" | $(KUBECTL) apply -f -
 
 deploy-spoke-operator: ensure-kustomize
 	cp deploy/klusterlet/config/kustomization.yaml deploy/klusterlet/config/kustomization.yaml.tmp
