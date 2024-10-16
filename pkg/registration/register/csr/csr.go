@@ -93,6 +93,7 @@ func (c *CSRDriver) Process(
 
 	// reconcile pending csr if exists
 	if len(c.csrName) > 0 {
+		recorder.Eventf("CSRSync", "Sync csr %s/%s for %s", c.csrName, c.csrName, controllerName)
 		// build a secret data map if the csr is approved
 		newSecretConfig, err := func() (map[string][]byte, error) {
 			// skip if there is no ongoing csr
@@ -175,6 +176,8 @@ func (c *CSRDriver) Process(
 		c.reset()
 		return secret, cond, err
 	}
+
+	recorder.Eventf("CSRSync", "Csr is nil, enter shouldCreateCSR")
 
 	// create a csr to request new client certificate if
 	// a. there is no valid client certificate issued for the current cluster/agent;
@@ -359,6 +362,7 @@ func hasAdditionalSecretData(additionalSecretData map[string][]byte, secret *cor
 		}
 
 		if !reflect.DeepEqual(v, value) {
+			fmt.Printf("key %q in secret %q does not match the expected value, v: %v, value: %v\n", k, secret.Namespace+"/"+secret.Name, v, value)
 			return fmt.Errorf("key %q in secret %q does not match the expected value",
 				k, secret.Namespace+"/"+secret.Name)
 		}

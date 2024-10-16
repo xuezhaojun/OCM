@@ -101,6 +101,8 @@ func NewSecretController(
 }
 
 func (c *secretController) sync(ctx context.Context, syncCtx factory.SyncContext) error {
+	syncCtx.Recorder().Eventf("SecretSync", "Sync secret %s/%s for %s", c.SecretNamespace, c.SecretName, c.controllerName)
+
 	// get secret containing client certificate
 	secret, err := c.ManagementCoreClient.Secrets(c.SecretNamespace).Get(ctx, c.SecretName, metav1.GetOptions{})
 	switch {
@@ -120,6 +122,7 @@ func (c *secretController) sync(ctx context.Context, syncCtx factory.SyncContext
 	}
 
 	if c.secretToSave == nil {
+		syncCtx.Recorder().Eventf("SecretProcess", "Process secret %s/%s for %s", c.SecretNamespace, c.SecretName, c.controllerName)
 		secret, cond, err := c.driver.Process(ctx, c.controllerName, secret, c.additionalSecretData, syncCtx.Recorder(), c.option)
 		if cond != nil {
 			if updateErr := c.statusUpdater(ctx, *cond); updateErr != nil {
@@ -142,11 +145,13 @@ func (c *secretController) sync(ctx context.Context, syncCtx factory.SyncContext
 		c.secretToSave = secret
 	}
 
+	syncCtx.Recorder().Eventf("SecretSave", "Secret %s/%s for %s is updated",
+		c.SecretNamespace, c.SecretName, c.controllerName)
 	// save the changes into secret
 	if err := saveSecret(c.ManagementCoreClient, c.SecretNamespace, c.secretToSave); err != nil {
 		return err
 	}
-	syncCtx.Recorder().Eventf("SecretSave", "Secret %s/%s for %s is updated",
+	syncCtx.Recorder().Eventf("SecretSave", "Secret %s/%s for %s is saved",
 		c.SecretNamespace, c.SecretName, c.controllerName)
 	// clean the cached secret.
 	c.secretToSave = nil
