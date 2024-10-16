@@ -79,9 +79,9 @@ func (o *SpokeAgentOptions) AddFlags(fs *pflag.FlagSet) {
 // Validate verifies the inputs.
 func (o *SpokeAgentOptions) Validate() error {
 	if features.SpokeMutableFeatureGate.Enabled(ocmfeature.MultipleHubs) {
-		// expect BootstrapKubeconfig is empty and BootstrapKubeconfigs has at least 2 items
-		if len(o.BootstrapKubeconfigs) < 2 {
-			return errors.New("expect at least 2 bootstrap kubeconfigs")
+		// expect BootstrapKubeconfig is empty and BootstrapKubeconfigs has at least 1 items
+		if len(o.BootstrapKubeconfigs) < 1 {
+			return errors.New("expect at least 1 bootstrap kubeconfigs")
 		}
 	} else if !features.SpokeMutableFeatureGate.Enabled(ocmfeature.MultipleHubs) {
 		if o.BootstrapKubeconfig == "" {
