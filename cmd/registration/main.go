@@ -59,6 +59,8 @@ func newRegistrationCommand() *cobra.Command {
 		cmd.Version = v
 	}
 
+	fmt.Println("Registration binary")
+
 	cmd.AddCommand(hub.NewRegistrationController())
 	cmd.AddCommand(spoke.NewRegistrationAgent())
 	cmd.AddCommand(webhook.NewRegistrationWebhook())
